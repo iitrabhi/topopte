@@ -28,15 +28,15 @@ class Topopt(object):
         The loadcase(s) considerd for this optimisation problem.
     fesolver : object, child of the CSCStiffnessMatrix class
         The finite element solver.
-    verbose : bool
+    verbose : bool, optional
         Printing itteration results.
-    x0_loc : str
+    x0_loc : str, optional
         Set initial design with numpy '.npy' file location.
-    history : boolean
+    history : boolean, optional
         Saving a history array or not.
 
-    Atributes
-    -------
+    Attributes
+    ----------
     constraint : object of DensityConstraint class
         The constraints for this optimization problem.
     load : object, child of the Loads class
@@ -169,7 +169,7 @@ class Topopt(object):
         - and finaly updates density distribution (design).
 
         Parameters
-        -------
+        ----------
         penal : float
             Material model penalisation (SIMP).
         rmin : float
@@ -293,7 +293,7 @@ class Topopt(object):
             The filter type that is selected, either 'sensitivity' or 'density'.
 
         Returns
-        ------
+        -------
         xf : 2-D array size(nely, nelx)
             Filterd density distribution.
         """
@@ -339,7 +339,7 @@ class Topopt(object):
             The filter type that is selected, either 'sensitivity' or 'density'.
 
         Returns
-        ------
+        -------
         dkif : 2-D array size(nely, nelx)
             Filterd sensitivity distribution.
         """
@@ -367,64 +367,66 @@ class Topopt(object):
 
     # MMA problem linearisation
     def mma(self, m, n, itr, xval, xmin, xmax, xold1, xold2, f0val, df0dx, fval, dfdx, low, upp, a0, a, c, d):
-        '''
+        """
         This function mmasub performs one MMA-iteration, aimed at solving the
         nonlinear programming problem:
 
-        Minimize  f_0(x) + a_0*z + sum( c_i*y_i + 0.5*d_i*(y_i)^2 )
-            subject to  f_i(x) - a_i*z - y_i <= 0,  i = 1,...,m
+        .. math::
 
-                    xmin_j <= x_j <= xmax_j,        j = 1,...,n
+            \\min & f_0(x) & +  a_0z + \\sum_{i=1}^m \\left(c_iy_i + \\frac{1}{2}d_iy_i^2\\right) \\\\
+            &\\text{s.t. }& f_i(x) - a_iz - y_i \\leq 0  \hspace{1cm} & i \in \{1,2,\dots,m \} \\\\
+            & & x_{\\min} \\geq x_j \geq x_{\\max} & j \in \{1,2,\dots,n \} \\\\
+            & & y_i \leq 0 & i \in \{1,2,\dots,m \} \\\\
+            & & z \\geq 0
 
-                    z >= 0,   y_i >= 0,             i = 1,...,m
         Parameters
-        _______
+        ----------
         m : int
             The number of general constraints.
         n : int
-            The number of variables x_j.
+            The number of variables :math:`x_j`.
         itr : int
-            Current iteration number ( =1 the first time mmasub is called).
+            Current iteration number (=1 the first time mmasub is called).
         xval : 1-D array len(n)
-            Vector with the current values of the variables x_j.
+            Vector with the current values of the variables :math:`x_j`.
         xmin : 1-D array len(n)
-            Vector with the lower bounds for the variables x_j.
+            Vector with the lower bounds for the variables :math:`x_j`.
         xmax : 1-D array len(n)
-            Vector with the upper bounds for the variables x_j.
+            Vector with the upper bounds for the variables :math:`x_j`.
         xold1 : 1-D array len (n)
             xval, one iteration ago when iter>1, zero othewise.
         xold2 : 1-D array len (n)
             xval, two iteration ago when iter>2, zero othewise.
         f0val : float
-            The value of the objective function f_0 at xval.
+            The value of the objective function :math:`f_0` at xval.
         df0dx : 1-D array len(n)
-            Vector with the derivatives of the objective function f_0 with
-            respect to the variables x_j, calculated at xval.
+            Vector with the derivatives of the objective function :math:`f_0` with
+            respect to the variables :math:`x_j`, calculated at xval.
         fval : 1-D array len(m)
-            Vector with the values of the constraint functions f_i,
+            Vector with the values of the constraint functions :math:`f_i`,
             calculated at xval.
         dfdx : 2-D array size(m x n)
-            (m x n)-matrix with the derivatives of the constraint functions f_i
-            with respect to the variables x_j, calculated at xval.
+            (m x n)-matrix with the derivatives of the constraint functions :math:`f_i`.
+            with respect to the variables :math:`x_j`, calculated at xval.
         low : 1-D array len(n)
             Vector with the lower asymptotes from the previous iteration
-            (provided thnp.array([1,2])at iter>1).
+            (provided that iter>1).
         upp : 1-D array len(n)
             Vector with the upper asymptotes from the previous iteration
             (provided that iter>1).
         a0 : float
-            The constants a_0 in the term a_0*z.
+            The constants :math:`a_0`  in the term :math:`a_0 z`.
         a : 1-D array len(m)
-            Vector with the constants a_i in the terms a_i*z.
+            Vector with the constants :math:`a_i1  in the terms :math:`a_i*z`.
         c : 1-D array len(m)
-            Vector with the constants c_i in the terms c_i*y_i.
+            Vector with the constants :math:`c_i` in the terms :math:`c_i*y_i`.
         d : 1-D array len(m)
-            Vector with the constants d_i in the terms 0.5*d_i*(y_i)^2.
+            Vector with the constants :math:`d_i` in the terms :math:`0.5d_i (y_i)^2`.
 
         Returns
-        ------
+        -------
         xmma : 1-D array len(n)
-            Column vector with the optimal values of the variables x_j in the
+            Column vector with the optimal values of the variables :math:`x_j` in the
             current MMA subproblem.
         low : 1-D array len(n)
             Column vector with the lower asymptotes, calculated and used in the
@@ -433,15 +435,13 @@ class Topopt(object):
             Column vector with the upper asymptotes, calculated and used in the
             current MMA subproblem.
 
-
         Version September 2007 (and a small change August 2008)
 
         Krister Svanberg <krille@math.kth.se>
         Department of Mathematics KTH, SE-10044 Stockholm, Sweden.
 
         Translated to python 3 by A.J.J. Lagerweij TU Delft June 2018
-        '''
-
+        """
         epsimin = np.sqrt(m + n)*10**(-9)
         raa0 = 0.00001
         albefa = 0.1
@@ -515,16 +515,22 @@ class Topopt(object):
         return xmma, low, upp
 
     def solvemma(self, m, n, epsimin, low, upp, alfa, beta, p0, q0, P, Q, a0, a, b, c, d):
-        '''
-        This function solves the MMA subproblem with a primal-dual Newton
-        method:
+        """
+        This function solves the MMA subproblem with a primal-dual Newton method.
 
-        minimize   SUM[ p0j/(uppj-xj) + q0j/(xj-lowj) ] + a0*z + SUM[ ci*yi +
-        0.5*di*(yi)^2 ],
+        .. math::
 
-        subject to SUM[ pij/(uppj-xj) + qij/(xj-lowj) ] - ai*z - yi <= bi,
-        alfaj <=  xj <=  betaj,  yi >= 0,  z >= 0.
-        '''
+            \\min &\\sum_{j-1}^n& \\left( \\frac{p_{0j}^{(k)}}{U_j^{(k)} - x_j} + \\frac{q_{0j}^{(k)}}{x_j - L_j^{(k)}} \\right) +  a_0z + \\sum_{i=1}^m \\left(c_iy_i + \\frac{1}{2}d_iy_i^2\\right) \\\\
+            &\\text{s.t. }& \\sum_{j-1}^n \\left(\\frac{p_{ij}^{(k)}}{U_j^{(k)} - x_j} + \\frac{q_{ij}^{(k)}}{x_j - L_j^{(k)}} \\right) - a_iz - y_i \\leq b_i \\\\
+            & & \\alpha_j \\geq x_j \geq \\beta_j\\\\
+            & & z \\geq 0
+        
+        Returns
+        -------
+        x : 1-D array len(n)
+            Column vector with the optimal values of the variables x_j in the
+            current MMA subproblem.
+        """
         epsi = 1
         een = np.ones((n))
         eem = np.ones((m))
@@ -704,3 +710,4 @@ class Topopt(object):
                 print('      epsi = ', epsi)
             epsi = 0.1*epsi
         return x
+

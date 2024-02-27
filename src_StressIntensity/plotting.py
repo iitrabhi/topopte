@@ -26,11 +26,11 @@ class Plot(object):
         The loadcase(s) considerd for this optimisation problem.
     directory : str
         Relative directory that the results should be saved in.
-    title : str
+    title : str, optional
         Title of the plot, optionaly.
 
-    Atributes
-    --------
+    Attributes
+    ---------
     nelx : int
         Number of elements in x direction.
     nely : int
@@ -43,22 +43,6 @@ class Plot(object):
         This list contains all density distributions that need to be plotted.
     directory : str
         Location where the results need to be saved.
-
-    Methods
-    -------
-    add(x, animate)
-        Adding a plot of the density distribution to the figure.
-    find(dof)
-        Function to find x and y location of node for any dof.
-    boundary()
-        Plotting the boundary conditions.
-    loading()
-        Plotting the forces acting on the problem.
-    save(filename, fps)
-        Saving an plot in svg or mp4 format.
-    show()
-        Displaying the generated figure.
-    saveXYZ(x, x_size, thickness)
     """
     def __init__(self, load, directory, title=None):
         # create diretory if required
@@ -96,7 +80,7 @@ class Plot(object):
         if animated is False:
             self.images = []
         x = x.astype(np.float32)
-        plt_im = plt.imshow(x, vmin=0, vmax=1, cmap=plt.cm.gray_r, animated=animated)
+        plt_im = plt.imshow(x, cmap=plt.cm.gray_r, vmin=0, vmax=2, animated=animated)
         self.images.append([plt_im])
 
     def find(self, dof):
@@ -214,14 +198,12 @@ class Plot(object):
         if len(self.images) == 1:
             self.fig.savefig(self.directory+filename+'.svg')
         else:
-            writer = anim.FFMpegWriter(fps=30, extra_args=['-c:v', 'h264'])
+            writer = anim.FFMpegWriter(fps=30, codec='h264')
             animation = anim.ArtistAnimation(self.fig, self.images, interval=1, blit=True, repeat=False)
             animation.save(self.directory+filename+'.mp4', writer=writer)
 
     def show(self):
-        """
-        Showing the plot in a window.
-        """
+        """Showing the plot in a window."""
         self.fig.show()
 
     def saveXYZ(self, x, x_size, thickness=1):

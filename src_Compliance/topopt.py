@@ -39,7 +39,7 @@ class Topopt(object):
         The loadcase(s) considerd for this optimisation problem.
     fesolver : object, child of the CSCStiffnessMatrix class
         The finite element solver.
-    verbose : bool
+    verbose : bool, optional
         Printing itteration results.
     itr : int
         Number of iterations performed
@@ -214,7 +214,7 @@ class Topopt(object):
         This funcion calculates compliance and compliance density derivative.
 
         Parameters
-        -------
+        ----------
         x : 2-D array size(nely, nelx)
             Possibly filterd density distribution.
         u : 1-D array len(max(edof)+1)
@@ -263,7 +263,7 @@ class Topopt(object):
             The filter type that is selected, either 'sensitivity' or 'density'.
 
         Returns
-        ------
+        -------
         xf : 2-D array size(nely, nelx)
             Filterd density distribution.
         """
@@ -308,7 +308,7 @@ class Topopt(object):
             The filter type that is selected, either 'sensitivity' or 'density'.
 
         Returns
-        ------
+        -------
         dcf : 2-D array size(nely, nelx)
             Filterd sensitivity distribution.
         """
@@ -337,7 +337,7 @@ class Topopt(object):
 
     # MMA problem linearisation
     def mma(self, m, n, itr, xval, xmin, xmax, xold1, xold2, f0val, df0dx, fval, dfdx, low, upp, a0, a, c, d):
-        '''
+        """
         This function mmasub performs one MMA-iteration, aimed at solving the
         nonlinear programming problem:
 
@@ -348,56 +348,55 @@ class Topopt(object):
             & & x_{\\min} \\geq x_j \geq x_{\\max} & j \in \{1,2,\dots,n \} \\\\
             & & y_i \leq 0 & i \in \{1,2,\dots,m \} \\\\
             & & z \\geq 0
-        
 
         Parameters
         ----------
         m : int
             The number of general constraints.
         n : int
-            The number of variables x_j.
+            The number of variables :math:`x_j`.
         itr : int
-            Current iteration number ( =1 the first time mmasub is called).
+            Current iteration number (=1 the first time mmasub is called).
         xval : 1-D array len(n)
-            Vector with the current values of the variables x_j.
+            Vector with the current values of the variables :math:`x_j`.
         xmin : 1-D array len(n)
-            Vector with the lower bounds for the variables x_j.
+            Vector with the lower bounds for the variables :math:`x_j`.
         xmax : 1-D array len(n)
-            Vector with the upper bounds for the variables x_j.
+            Vector with the upper bounds for the variables :math:`x_j`.
         xold1 : 1-D array len (n)
             xval, one iteration ago when iter>1, zero othewise.
         xold2 : 1-D array len (n)
             xval, two iteration ago when iter>2, zero othewise.
         f0val : float
-            The value of the objective function f_0 at xval.
+            The value of the objective function :math:`f_0` at xval.
         df0dx : 1-D array len(n)
-            Vector with the derivatives of the objective function f_0 with
-            respect to the variables x_j, calculated at xval.
+            Vector with the derivatives of the objective function :math:`f_0` with
+            respect to the variables :math:`x_j`, calculated at xval.
         fval : 1-D array len(m)
-            Vector with the values of the constraint functions f_i,
+            Vector with the values of the constraint functions :math:`f_i`,
             calculated at xval.
         dfdx : 2-D array size(m x n)
-            (m x n)-matrix with the derivatives of the constraint functions f_i
-            with respect to the variables x_j, calculated at xval.
+            (m x n)-matrix with the derivatives of the constraint functions :math:`f_i`.
+            with respect to the variables :math:`x_j`, calculated at xval.
         low : 1-D array len(n)
             Vector with the lower asymptotes from the previous iteration
-            (provided thnp.array([1,2])at iter>1).
+            (provided that iter>1).
         upp : 1-D array len(n)
             Vector with the upper asymptotes from the previous iteration
             (provided that iter>1).
         a0 : float
-            The constants a_0 in the term a_0*z.
+            The constants :math:`a_0`  in the term :math:`a_0 z`.
         a : 1-D array len(m)
-            Vector with the constants a_i in the terms a_i*z.
+            Vector with the constants :math:`a_i1  in the terms :math:`a_i*z`.
         c : 1-D array len(m)
-            Vector with the constants c_i in the terms c_i*y_i.
+            Vector with the constants :math:`c_i` in the terms :math:`c_i*y_i`.
         d : 1-D array len(m)
-            Vector with the constants d_i in the terms 0.5*d_i*(y_i)^2.
+            Vector with the constants :math:`d_i` in the terms :math:`0.5d_i (y_i)^2`.
 
         Returns
         -------
         xmma : 1-D array len(n)
-            Column vector with the optimal values of the variables x_j in the
+            Column vector with the optimal values of the variables :math:`x_j` in the
             current MMA subproblem.
         low : 1-D array len(n)
             Column vector with the lower asymptotes, calculated and used in the
@@ -406,15 +405,13 @@ class Topopt(object):
             Column vector with the upper asymptotes, calculated and used in the
             current MMA subproblem.
 
-
         Version September 2007 (and a small change August 2008)
 
         Krister Svanberg <krille@math.kth.se>
         Department of Mathematics KTH, SE-10044 Stockholm, Sweden.
 
         Translated to python 3 by A.J.J. Lagerweij TU Delft June 2018
-        '''
-
+        """
         epsimin = np.sqrt(m + n)*10**(-9)
         raa0 = 0.00001
         albefa = 0.1
@@ -488,8 +485,8 @@ class Topopt(object):
         return xmma, low, upp
 
     def solvemma(self, m, n, epsimin, low, upp, alfa, beta, p0, q0, P, Q, a0, a, b, c, d):
-        '''
-        This function solves the MMA subproblem with a primal-dual Newton method
+        """
+        This function solves the MMA subproblem with a primal-dual Newton method.
 
         .. math::
 
@@ -503,7 +500,7 @@ class Topopt(object):
         x : 1-D array len(n)
             Column vector with the optimal values of the variables x_j in the
             current MMA subproblem.
-        '''
+        """
         epsi = 1
         een = np.ones((n))
         eem = np.ones((m))

@@ -1,8 +1,8 @@
 """
-Topology Optimization class that handles the itterations, objective functions,
+Topology Optimization class that handles the iterations, objective functions,
 filters and update scheme. It requires to call upon a constraint, load case and
 FE solver classes. This version of the code is meant for local compliant
-maximization.
+maximization (Actuator design).
 
 Bram Lagerweij
 Aerospace Structures and Materials Department TU Delft
@@ -25,54 +25,36 @@ class Topopt(object):
     constraint : object of DensityConstraint class
         The constraints for this optimization problem.
     load : object, child of the Loads class
-        The loadcase(s) considerd for this optimisation problem.
+        The loadcase(s) considered for this optimisation problem.
     fesolver : object, child of the CSCStiffnessMatrix class
         The finite element solver.
-    verbose : bool
+    verbose : bool, optional
         Printing itteration results.
 
-    Atributes
-    -------
+    Attributes
+    ----------
     constraint : object of DensityConstraint class
         The constraints for this optimization problem.
     load : object, child of the Loads class
-        The loadcase(s) considerd for this optimisation problem.
+        The loadcase(s) considered for this optimisation problem.
     fesolver : object, child of the CSCStiffnessMatrix class
         The finite element solver.
     verbose : bool
-        Printing itteration results.
+        Printing iteration results.
     itr : int
         Number of iterations performed
     x : 2-D array size(nely, nelx)
         Array containing the current densities of every element.
     xold1 : 1D array len(nelx*nely)
-        Flattend density distribution one iteration ago.
+        Flattened density distribution one iteration ago.
     xold2 : 1D array len(nelx*nely)
-        Flattend density distribution two iteration ago.
+        Flattened density distribution two iteration ago.
     low : 1D array len(nelx*nely)
         Column vector with the lower asymptotes, calculated and used in the
-        MMA subproblem of the previous itteration.
+        MMA subproblem of the previous iteration.
     upp : 1D array len(nelx*nely)
         Column vector with the lower asymptotes, calculated and used in the
-        MMA subproblem of the previous itteration.
-
-    Methods
-    ------
-    layout(penal, rmin, delta, loopy, filt, history):
-        Calulates the optimal density distribution, with topology optimization.
-    iter(penal, rmin, filt):
-        Performs one iteration of topology optimization.
-    kicalc(x, u, lamba, penal, length):
-        Calculates the stress intensity factor and its density derivatives.
-    densityfilt(rmin, filt):
-        Blurs the density distribution to counteract checkerboard patterns.
-    sensitivityfilt(x, rmin, dki, filt):
-        Blurs the stress intensity to density sensitivity to counteract
-        checkepboard patterns.
-    mma(m, n, itr, xval, xmin, xmax, xold1, xold2, f0val, df0dx, fval, dfdx, low, upp, a0, a, c, d):
-        Performs one itteration of the MMA update scheme.
-    solvemma(m, n, epsimin, low, upp, alfa, beta, p0, q0, P, Q, a0, a, b, c, d):
-        Primal-Dual Newton solver used by the MMA update scheme
+        MMA subproblem of the previous iteration.
     """
     def __init__(self, constraint, load, fesolver, verbose=False):
         self.constraint = constraint
@@ -109,15 +91,15 @@ class Topopt(object):
             Amount of iteration allowed.
         filt : str
             The filter type that is selected, either 'sensitivity' or 'density'.
-        history : bool
+        history : bool, optional
             Do the intermediate results need to be stored.
 
         Returns
         -------
         xf : array size(nely, nelx)
             Density distribution resulting from the optimisation.
-        xf_history : list of arrays len(itterations size(nely, nelx))
-            List with the density distributions of all itterations, None when
+        xf_history : list of arrays len(iterations size(nely, nelx))
+            List with the density distributions of all iterations, None when
             history != True.
         """
         # check if an existing filter was selected
@@ -140,7 +122,7 @@ class Topopt(object):
                 xf = self.densityfilt(rmin, filt)
                 xf_history.append(xf.astype(np.float16))
 
-        # the filtered density is the physical desity
+        # the filtered density is the physical density
         xf = self.densityfilt(rmin, filt)
 
         if history:
@@ -151,20 +133,20 @@ class Topopt(object):
     # iteration
     def iter(self, penal, rmin, filt):
         """
-        This funcion performs one itteration of the topology optimisation
+        This function performs one iteration of the topology optimisation
         problem. It
 
         - loads the constraints,
         - calculates the stiffness matrices,
         - executes the density filter,
         - executes the FEA solver,
-        - calls upon the displacment objective and its sensitivity calculation,
+        - calls upon the displacement objective and its sensitivity calculation,
         - executes the sensitivity filter,
         - executes the MMA update scheme,
-        - and finaly updates density distribution (design).
+        - and finally updates density distribution (design).
 
         Parameters
-        -------
+        ----------
         penal : float
             Material model penalisation (SIMP).
         rmin : float
@@ -183,7 +165,7 @@ class Topopt(object):
         constraint = self.constraint
         load = self.load
 
-        # element stiffnes matrices
+        # element stiffness matrices
         ke = load.lk(load.young, load.poisson)
         kmin = load.lk(load.Emin, load.poisson)
 
@@ -196,10 +178,10 @@ class Topopt(object):
         # displacement and its derivative
         uout, duout = self.disp(xf, u, lamba, ke, penal)
 
-        # applying the sensitvity filter if required
+        # applying the sensitivity filter if required
         duoutf = self.sensitivityfilt(xf, rmin, duout, filt)
 
-        # Prepairing MMA update scheme
+        # Preparing MMA update scheme
         m = 1  # amount of constraint functions
         n = len(self.ele_free)  # load.nelx*load.nely  # amount of elements
         x = np.copy(self.x).flatten()[self.ele_free]
@@ -229,13 +211,13 @@ class Topopt(object):
     # updated compliance algorithm
     def disp(self, x, u, lamba, ke, penal):
         """
-        This fuction calculates displacement of the objective node and its
+        This function calculates displacement of the objective node and its
         sensitivity to the densities.
 
         Parameters
-        -------
+        ----------
         x : 2-D array size(nely, nelx)
-            Possibly filterd density distribution.
+            Possibly filtered density distribution.
         u : 1-D array size(max(edof), 1)
             Displacement of all degrees of freedom.
         lamba : 2-D array size(max(edof), 1)
@@ -252,13 +234,13 @@ class Topopt(object):
             Displacement objective sensitivity to density changes.
         """
         nely, nelx = x.shape
-        xe = x.T.flatten()  # flat list wich desities
+        xe = x.T.flatten()  # flat list with densities
 
         edof = self.load.edof()[0]
         ue = u[edof]  # list with the displacements of the nodes of that element
-        lamba = lamba[edof] # list with lamda result for each node of every element
+        lamba = lamba[edof] # list with lambda result for each node of every element
 
-        # calculate displacment at actuator tip
+        # calculate displacement at actuator tip
         l = self.load.displaceloc()
         uout = np.dot(l.T, u)[0, 0]
 
@@ -286,7 +268,7 @@ class Topopt(object):
             The filter type that is selected, either 'sensitivity' or 'density'.
 
         Returns
-        ------
+        -------
         xf : 2-D array size(nely, nelx)
             Filterd density distribution.
         """
@@ -330,7 +312,7 @@ class Topopt(object):
             The filter type that is selected, either 'sensitivity' or 'density'.
 
         Returns
-        ------
+        -------
         duoutf : 2-D array size(nely, nelx)
             Filterd sensitivity distribution.
         """
@@ -358,64 +340,66 @@ class Topopt(object):
 
     # MMA problem linearisation
     def mma(self, m, n, itr, xval, xmin, xmax, xold1, xold2, f0val, df0dx, fval, dfdx, low, upp, a0, a, c, d):
-        '''
+        """
         This function mmasub performs one MMA-iteration, aimed at solving the
         nonlinear programming problem:
 
-        Minimize  f_0(x) + a_0*z + sum( c_i*y_i + 0.5*d_i*(y_i)^2 )
-            subject to  f_i(x) - a_i*z - y_i <= 0,  i = 1,...,m
+        .. math::
 
-                    xmin_j <= x_j <= xmax_j,        j = 1,...,n
+            \\min & f_0(x) & +  a_0z + \\sum_{i=1}^m \\left(c_iy_i + \\frac{1}{2}d_iy_i^2\\right) \\\\
+            &\\text{s.t. }& f_i(x) - a_iz - y_i \\leq 0  \hspace{1cm} & i \in \{1,2,\dots,m \} \\\\
+            & & x_{\\min} \\geq x_j \geq x_{\\max} & j \in \{1,2,\dots,n \} \\\\
+            & & y_i \leq 0 & i \in \{1,2,\dots,m \} \\\\
+            & & z \\geq 0
 
-                    z >= 0,   y_i >= 0,             i = 1,...,m
         Parameters
-        _______
+        ----------
         m : int
             The number of general constraints.
         n : int
-            The number of variables x_j.
+            The number of variables :math:`x_j`.
         itr : int
-            Current iteration number ( =1 the first time mmasub is called).
+            Current iteration number (=1 the first time mmasub is called).
         xval : 1-D array len(n)
-            Vector with the current values of the variables x_j.
+            Vector with the current values of the variables :math:`x_j`.
         xmin : 1-D array len(n)
-            Vector with the lower bounds for the variables x_j.
+            Vector with the lower bounds for the variables :math:`x_j`.
         xmax : 1-D array len(n)
-            Vector with the upper bounds for the variables x_j.
+            Vector with the upper bounds for the variables :math:`x_j`.
         xold1 : 1-D array len (n)
             xval, one iteration ago when iter>1, zero othewise.
         xold2 : 1-D array len (n)
             xval, two iteration ago when iter>2, zero othewise.
         f0val : float
-            The value of the objective function f_0 at xval.
+            The value of the objective function :math:`f_0` at xval.
         df0dx : 1-D array len(n)
-            Vector with the derivatives of the objective function f_0 with
-            respect to the variables x_j, calculated at xval.
+            Vector with the derivatives of the objective function :math:`f_0` with
+            respect to the variables :math:`x_j`, calculated at xval.
         fval : 1-D array len(m)
-            Vector with the values of the constraint functions f_i,
+            Vector with the values of the constraint functions :math:`f_i`,
             calculated at xval.
         dfdx : 2-D array size(m x n)
-            (m x n)-matrix with the derivatives of the constraint functions f_i
-            with respect to the variables x_j, calculated at xval.
+            (m x n)-matrix with the derivatives of the constraint functions :math:`f_i`.
+            with respect to the variables :math:`x_j`, calculated at xval.
         low : 1-D array len(n)
             Vector with the lower asymptotes from the previous iteration
-            (provided thnp.array([1,2])at iter>1).
+            (provided that iter>1).
         upp : 1-D array len(n)
             Vector with the upper asymptotes from the previous iteration
             (provided that iter>1).
         a0 : float
-            The constants a_0 in the term a_0*z.
+            The constants :math:`a_0`  in the term :math:`a_0 z`.
         a : 1-D array len(m)
-            Vector with the constants a_i in the terms a_i*z.
+            Vector with the constants :math:`a_i1  in the terms :math:`a_i*z`.
         c : 1-D array len(m)
-            Vector with the constants c_i in the terms c_i*y_i.
+            Vector with the constants :math:`c_i` in the terms :math:`c_i*y_i`.
         d : 1-D array len(m)
-            Vector with the constants d_i in the terms 0.5*d_i*(y_i)^2.
+            Vector with the constants :math:`d_i` in the terms :math:`0.5d_i (y_i)^2`.
 
         Returns
-        ------
+        -------
         xmma : 1-D array len(n)
-            Column vector with the optimal values of the variables x_j in the
+            Column vector with the optimal values of the variables :math:`x_j` in the
             current MMA subproblem.
         low : 1-D array len(n)
             Column vector with the lower asymptotes, calculated and used in the
@@ -424,14 +408,13 @@ class Topopt(object):
             Column vector with the upper asymptotes, calculated and used in the
             current MMA subproblem.
 
-
         Version September 2007 (and a small change August 2008)
 
         Krister Svanberg <krille@math.kth.se>
         Department of Mathematics KTH, SE-10044 Stockholm, Sweden.
 
         Translated to python 3 by A.J.J. Lagerweij TU Delft June 2018
-        '''
+        """
 
         epsimin = np.sqrt(m + n)*10**(-9)
         raa0 = 0.00001
@@ -506,14 +489,22 @@ class Topopt(object):
         return xmma, low, upp
 
     def solvemma(self, m, n, epsimin, low, upp, alfa, beta, p0, q0, P, Q, a0, a, b, c, d):
-        '''
-        This function solves the MMA subproblem with a primal-dual Newton method:
+        """
+        This function solves the MMA subproblem with a primal-dual Newton method.
 
-        minimize   SUM[ p0j/(uppj-xj) + q0j/(xj-lowj) ] + a0*z + SUM[ ci*yi + 0.5*di*(yi)^2 ],
+        .. math::
 
-        subject to SUM[ pij/(uppj-xj) + qij/(xj-lowj) ] - ai*z - yi <= bi,
-        alfaj <=  xj <=  betaj,  yi >= 0,  z >= 0.
-        '''
+            \\min &\\sum_{j-1}^n& \\left( \\frac{p_{0j}^{(k)}}{U_j^{(k)} - x_j} + \\frac{q_{0j}^{(k)}}{x_j - L_j^{(k)}} \\right) +  a_0z + \\sum_{i=1}^m \\left(c_iy_i + \\frac{1}{2}d_iy_i^2\\right) \\\\
+            &\\text{s.t. }& \\sum_{j-1}^n \\left(\\frac{p_{ij}^{(k)}}{U_j^{(k)} - x_j} + \\frac{q_{ij}^{(k)}}{x_j - L_j^{(k)}} \\right) - a_iz - y_i \\leq b_i \\\\
+            & & \\alpha_j \\geq x_j \geq \\beta_j\\\\
+            & & z \\geq 0
+        
+        Returns
+        -------
+        x : 1-D array len(n)
+            Column vector with the optimal values of the variables x_j in the
+            current MMA subproblem.
+        """
         epsi = 1
         een = np.ones((n))
         eem = np.ones((m))

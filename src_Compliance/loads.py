@@ -100,8 +100,8 @@ class Load(object):
         n4 : int
             The node number of the bottom left node.
         """
-        n1 = self.node(elx,     ely    ) 
-        n2 = self.node(elx + 1, ely,   ) 
+        n1 = self.node(elx,     ely    )
+        n2 = self.node(elx + 1, ely,   )
         n3 = self.node(elx + 1, ely + 1)
         n4 = self.node(elx,     ely + 1)
         return n1, n2, n3, n4

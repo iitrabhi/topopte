@@ -5,7 +5,6 @@ Documentation for TopOpt in Python
 Introduction
 ============
 
-
 .. raw:: latex
 
    \chapter{About}
@@ -17,17 +16,17 @@ Introduction
    About
    TopOpt
    Objectives
+   Code
    License_Link
 
 .. raw:: latex
 
-   \chapter{Introduction and Examples}
+   \chapter{Theory and Examples}
 
 .. toctree::
-   :caption: Introduction and Examples
+   :caption: Theory and Examples
    :maxdepth: 2
 
-   Code
    Stiffness
    Compliance
    Stress_Intensity
@@ -37,6 +36,7 @@ Introduction
 
    \chapter{Docstrings}
 
+
 .. toctree::
    :caption: Docstrings
    :maxdepth: 2
@@ -45,7 +45,7 @@ Introduction
    Compliance_Docs
    Stress_Intensity_Docs
    Fatigue_Life_Docs
-   
+
 
 Indices and Tables
 ==================
@@ -53,3 +53,5 @@ Indices and Tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
